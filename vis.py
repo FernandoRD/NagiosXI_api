@@ -5,6 +5,7 @@ from tkinter import messagebox as mb
 import json
 import re
 import functions
+import objects
 
 
 # Cria os widgets de botões para a visão read only
@@ -18,23 +19,9 @@ def draw_interface_applied(root, frame1, frame2, frame3, usr_tokens, usr_token_k
         widget.destroy()
 
     # cada dicionário tem 2 funções as keys são o que se escolhe no menu e os valores são o que a vem no JSON (fiz um de - para com os dados no help do Nagios
-    available_objects = {"objects/hoststatus": "hoststatus",
-                    "objects/servicestatus": "servicestatus",
-                    "objects/logentries": "logentry",
-                    "objects/statehistory": "stateentry",
-                    "objects/comment": "comment",
-                    "objects/downtime": "scheduleddowntime",
-                    "objects/contact": "contact",
-                    "objects/host": "host",
-                    "objects/service": "service",
-                    "objects/hostgroup": "hostgroup",
-                    "objects/servicegroup": "servicegroup",
-                    "objects/contactgroup": "contactgroup",
-                    "objects/timeperiod": "timeperiod",
-                    "objects/unconfigured": "unconfigured",
-                    "objects/hostgroupmembers": "hostgroup",
-                    "objects/servicegroupmembers": "servicegroup",
-                    "objects/contactgroupmembers": "contactgroup"}
+    available_objects = objects.available_objects
+
+
 
     api_object = StringVar(root)
     # Definido api_object default copiando a key de available_objects
@@ -66,8 +53,6 @@ def draw_interface_applied(root, frame1, frame2, frame3, usr_tokens, usr_token_k
 
     text_area_json.place(x=50, y=100)
     text_area_json.insert(END, "JSON Contents")
-    #text_area_json.pack(side=LEFT, fill=Y)
-    #text_area_scroll.pack(side=RIGHT, fill=Y)
     text_area_json.config(yscrollcommand=text_area_scroll.set)
     
 
@@ -86,11 +71,9 @@ def draw_interface_applied(root, frame1, frame2, frame3, usr_tokens, usr_token_k
         api_method = "get"
         api_url = functions.build_API(api_object, api_filter, usr_token_key, usr_tokens, api_base_key, api_base)
         list_json = functions.get_json(type_oper, api_method, api_url, available_objects, api_selected_object)
-        #print(list_json)
         # Antes de jogar na tela o JSON ele testa o tamanho, se for muito grande pergunta se quer salvar em arquivo direto
         if int(list_json[0]) > 50:
             if mb.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
-                #save_file(format_json(list_json[1]), "json")
                 functions.save_file(list_json[1], "json")
         else:
             text_area_json.delete(1.0, END)
@@ -107,7 +90,6 @@ def draw_interface_applied(root, frame1, frame2, frame3, usr_tokens, usr_token_k
     button_clear.place(x=370, y=10, width=150, height=30)
 
     def button_save_json():
-        #save_file(format_json(text_area_json.get(1.0, END)), "json")
         functions.save_file(text_area_json.get(1.0, END), "json")
 
     button_save = Button(frame3, text="Save JSON", command=button_save_json)
@@ -143,64 +125,24 @@ def draw_interface_config(root, frame1, frame2, frame3, usr_tokens, usr_token_ke
         widget.destroy()
 
     # Listas com as opções de configuração
-    available_objects_config = {"config/host":"config/host",
-                    "config/service":"config/service",
-                    "config/hostgroup":"config/hostgroup",
-                    "config/servicegroup":"config/servicegroup",
-                    "config/command":"config/command",
-                    "config/contact":"config/contact",
-                    "config/contactgroup":"config/contactgroup",
-                    "config/timeperiod":"config/timeperiod",
-                    "config/import":"config/import"}
-
-    options_available_host = {"get":["host_name"], 
-                    "post":["host_name", "address", "max_check_attempts", "check_period", "contacts", "contact_groups", "notification_interval", "notification_period"], 
-                    "put":["host_name", "address", "max_check_attempts", "check_period", "contacts", "contact_groups", "notification_interval", "notification_period"], 
-                    "delete":["host_name"]}
-    
-    options_available_service = {"get":["config_name", "service_description"], 
-                    "post":["host_name", "service_description", "check_command", "max_check_attempts", "check_interval", "retry_interval", "check_period", "notification_interval", "notification_period", "contacts", "contact_groups", "config_name"], 
-                    "put":["config_name", "host_name", "service_description", "check_command", "max_check_attempts", "check_interval", "retry_interval", "check_period", "notification_interval", "notification_period", "contacts", "contact_groups"],
-                    "delete":["host_name", "service_description"]}
-
-    options_available_hostgroup = {"get":["hostgroup_name"],
-                    "post":["hostgroup_name", "alias"],
-                    "put":["hostgroup_name", "alias"],
-                    "delete":["hostgroup_name"]}
-
-    options_available_servicegroup = {"get":["servicegroup_name"],
-                    "post":["servicegroup_name", "alias"],
-                    "put":["servicegroup_name", "alias"],
-                    "delete":["servicegroup_name"]}
-
-    options_available_command = {"get":["command_name"],
-                    "post":["command_name", "command_line"],
-                    "put":["command_name", "command_line"],
-                    "delete":["command_name"]}
-
-    options_available_contact = {"get":["contact_name"],
-                    "post":["contact_name", "host_notifications_enabled", "service_notifications_enabled", "host_notification_period", "service_notification_period", "host_notification_options",	"service_notification_options", "host_notification_commands", "service_notification_commands"],
-                    "put":["contact_name", "host_notifications_enabled", "service_notifications_enabled", "host_notification_period", "service_notification_period", "host_notification_options",	"service_notification_options", "host_notification_commands", "service_notification_commands"],
-                    "delete":["contact_name"]}
-
-    options_available_contactgroup = {"get":["contactgroup_name"],
-                    "post":["contactgroup_name", "alias", "members", "contactgroup_members"],
-                    "put":["contactgroup_name", "alias", "members", "contactgroup_members"],
-                    "delete":["contactgroup_name"]}
-
-    options_available_timeperiod = {"get":["timeperiod_name"],
-                    "post":["timeperiod_name", "alias", "\[weekday\]", "\[exception\]", "exclude"],
-                    "put":["timeperiod_name", "alias", "\[weekday\]", "\[exception\]", "exclude"],
-                    "delete":["timeperiod_name"]}
+    available_objects_config = objects.available_objects_config
+    options_available_host = objects.options_available_host
+    options_available_service = objects.options_available_service
+    options_available_hostgroup = objects.options_available_hostgroup
+    options_available_servicegroup = objects.options_available_servicegroup
+    options_available_command = objects.options_available_command
+    options_available_contact = objects.options_available_contact
+    options_available_contactgroup = objects.options_available_contactgroup
+    options_available_timeperiod = objects.options_available_timeperiod
 
     api_object = StringVar(root)
     # Definido api_object default copiando a key de available_objects
     api_object.set("config/host")
 
     tit_api_object_menu_config = Message(frame1, text="API Objects", aspect=400)
-    tit_api_object_menu_config.place(x=1, y=10)
+    tit_api_object_menu_config.place(x=1, y=36)
     api_object_menu_config = OptionMenu(frame1, api_object, *available_objects_config)
-    api_object_menu_config.place(x=130, y=5)
+    api_object_menu_config.place(x=128, y=36)
 
     def draw_buttons_config_get():
         #global api_filter
@@ -564,12 +506,12 @@ def draw_interface_config(root, frame1, frame2, frame3, usr_tokens, usr_token_ke
     api_method_rb.set(0)
     
     tit_api_method = Message(frame1, text="API Method", aspect=400)
-    tit_api_method.place(x=1, y=40)
+    tit_api_method.place(x=1, y=10)
 
-    Radiobutton(frame1, text="Get", variable = api_method_rb, command=draw_buttons_config_get, value = 0).place(x=130, y=40)
-    Radiobutton(frame1, text="Post", variable = api_method_rb, command=draw_buttons_config_post, value = 1).place(x=230, y=40)        
-    Radiobutton(frame1, text="Put", variable = api_method_rb, command=draw_buttons_config_put, value = 2).place(x=330, y=40)
-    Radiobutton(frame1, text="Delete", variable = api_method_rb, command=draw_buttons_config_delete, value = 3).place(x=430, y=40)
+    Radiobutton(frame1, text="Get", variable = api_method_rb, command=draw_buttons_config_get, value = 0).place(x=130, y=10)
+    Radiobutton(frame1, text="Post", variable = api_method_rb, command=draw_buttons_config_post, value = 1).place(x=230, y=10)        
+    Radiobutton(frame1, text="Put", variable = api_method_rb, command=draw_buttons_config_put, value = 2).place(x=330, y=10)
+    Radiobutton(frame1, text="Delete", variable = api_method_rb, command=draw_buttons_config_delete, value = 3).place(x=430, y=10)
     api_methods = ["get", "post", "put", "delete"]
 
     # Desenhando os botoes do get como padrão

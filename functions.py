@@ -79,6 +79,34 @@ def load_file():
     else:
         mb.showerror("Importar", "Arquivo não selecionado!")
 
+# Carrega os tokens dos servidores Nagios
+def load_tokens():
+    data_out = dict()
+    data_out_temp = list()
+    try:
+        with open("./tokens.txt", "r+") as file_tokens:
+            data_out_temp = file_tokens.readlines()
+        for i in data_out_temp:
+            i.replace("'", "")
+            data_out[str(i.split(":")[0])] = str(i.split(":")[1]).replace("\n","")
+        return data_out
+    except Exception as msg:
+        mb.showerror("Tokens", "Não foi possível carregar!\n" + str(msg))
+
+# Carrega as bases das APIs dos servidores nagios
+def load_servers():
+    data_out = dict()
+    data_out_temp = list()
+    try:
+        with open("./servers.txt", "r+") as file_tokens:
+            data_out_temp = file_tokens.readlines()
+        for i in data_out_temp:
+            i.replace("'", "")
+            data_out[str(i.split(":")[0])] = "https://"+str(i.split(":")[1]).replace("\n","")+"/nagiosxi/api/v1"
+        return data_out
+    except Exception as msg:
+        mb.showerror("Servers", "Não foi possível carregar!\n" + str(msg))
+
 # Faz o request no Nagios
 def get_json(type_oper, api_method, api_url, available_objects, api_selected_object):
     data_out_lst = []
