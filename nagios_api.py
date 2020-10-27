@@ -19,11 +19,11 @@ def main():
     for widget in frame0.winfo_children():
         widget.destroy()
 
-    usr_tokens = {"Casa" : "gdQLFXSKLUjI6eaNoprq08sUEFPTZb3JAEH05rWcdrkXbvgjh7lh6jnZfTJJTl8m"}
-    api_base = {"Casa" : "https://192.168.0.111/nagiosxi/api/v1"}
+    usr_tokens = {"Your NagiosXI" : "Your token"}
+    api_base = {"Your NagiosXI" : "https://192.168.0.1/nagiosxi/api/v1"}
     api_base_key = StringVar(root)
     # Definido api_object default copiando a key de api_command
-    api_base_key.set("Casa")
+    api_base_key.set("Your NagiosXI")
 
     tit_api_base = Message(frame0, text="API Base", aspect=400)
     tit_api_base.place(x=0, y=0)
@@ -31,7 +31,7 @@ def main():
     api_base_menu.place(x=130, y=0)
 
     usr_token_key = StringVar(root)
-    usr_token_key.set("Casa")
+    usr_token_key.set("Your NagiosXI")
 
     tit_user_token = Message(frame0, text="Token", aspect=400)
     tit_user_token.place(x=260, y=0)
