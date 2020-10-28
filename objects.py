@@ -23,8 +23,8 @@ available_objects_config = {"config/host":"config/host",
                 "config/command":"config/command",
                 "config/contact":"config/contact",
                 "config/contactgroup":"config/contactgroup",
-                "config/timeperiod":"config/timeperiod",
-                "config/import":"config/import"}
+                "config/timeperiod":"config/timeperiod"}
+#                "config/import":"config/import"}
 
 options_available_host = {"get":["host_name"], 
                 "post":["host_name", "address", "max_check_attempts", "check_period", "contacts", "contact_groups", "notification_interval", "notification_period"], 
