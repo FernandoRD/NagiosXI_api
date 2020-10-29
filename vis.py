@@ -1,13 +1,15 @@
 import requests
 from tkinter import Checkbutton, Tk, filedialog, Message, Entry, StringVar, Text, Scrollbar, LEFT, RIGHT, Y, END, W, SUNKEN, OUTSIDE
 from tkinter import Button, Frame, IntVar, Radiobutton, Widget, OptionMenu, Scrollbar
-from tkinter import messagebox as mb
+from tkinter import messagebox
 import json
 import re
+
+from requests.models import MissingSchema
 import functions
 import objects
 
-
+api_url = ""
 # Cria os widgets de botões para a visão read only
 def draw_interface_applied(root, frame1, frame2, frame3, usr_tokens, usr_token_key, api_base, api_base_key):
 
@@ -19,10 +21,8 @@ def draw_interface_applied(root, frame1, frame2, frame3, usr_tokens, usr_token_k
         widget.destroy()
 
     # cada dicionário tem 2 funções as keys são o que se escolhe no menu e os valores são o que a vem no JSON (fiz um de - para com os dados no help do Nagios
+    
     available_objects = objects.available_objects
-
-
-
     api_object = StringVar(root)
     # Definido api_object default copiando a key de available_objects
     api_object.set("objects/hoststatus")
@@ -60,7 +60,9 @@ def draw_interface_applied(root, frame1, frame2, frame3, usr_tokens, usr_token_k
         widget.destroy()
 
     def button_build_API():
-        functions.update_api(functions.build_API(api_object, api_filter, usr_token_key, usr_tokens, api_base_key, api_base), frame2)
+        global api_url
+        api_url = functions.build_API(api_object, api_filter, usr_token_key, usr_tokens, api_base_key, api_base)
+        functions.update_api(api_url, frame2)
 
     button_build_API = Button(frame3, text="Build API", command=button_build_API)
     button_build_API.place(x=50, y=10, width=150, height=30)
@@ -69,20 +71,30 @@ def draw_interface_applied(root, frame1, frame2, frame3, usr_tokens, usr_token_k
         api_selected_object = str(api_object.get())
         type_oper = "applied"
         api_method = "get"
-        api_url = functions.build_API(api_object, api_filter, usr_token_key, usr_tokens, api_base_key, api_base)
-        list_json = functions.get_json(type_oper, api_method, api_url, available_objects, api_selected_object)
-        # Antes de jogar na tela o JSON ele testa o tamanho, se for muito grande pergunta se quer salvar em arquivo direto
-        if int(list_json[0]) > 50:
-            if mb.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
-                functions.save_file(list_json[1], "json")
+        try:
+            list_json = functions.get_json(type_oper, api_method, api_url, available_objects, api_selected_object)
+        except ConnectionError:
+            messagebox.showerror("Conexão", "API Inválida!")
+        except MissingSchema:
+            messagebox.showerror("Conexão", "Monte a API primeiro!")
+        except Exception as e:
+            print(e)
+            messagebox.showerror("Conexão", "Erro desconhecido!")
         else:
-            text_area_json.delete(1.0, END)
-            text_area_json.insert(END, list_json[1])
+            # Antes de jogar na tela o JSON ele testa o tamanho, se for muito grande pergunta se quer salvar em arquivo direto
+            if int(list_json[0]) > 50:
+                if messagebox.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
+                    functions.save_file(list_json[1], "json")
+            else:
+                text_area_json.delete(1.0, END)
+                text_area_json.insert(END, list_json[1])
 
     button_get_jason = Button(frame3, text="Get JSON", command=button_get_json)
     button_get_jason.place(x=210, y=10, width=150, height=30)
 
     def button_clear_text():
+        global api_url
+        api_url = ""
         text_area_json.delete(1.0, END)
         # text_area_json.insert(END, resposta)
 
@@ -169,12 +181,12 @@ def draw_interface_config(root, frame1, frame2, frame3, usr_tokens, usr_token_ke
 
         text_area_json.place(x=50, y=100)
         text_area_json.insert(END, "JSON Contents")
-        #text_area_json.pack(side=LEFT, fill=Y)
-        #text_area_scroll.pack(side=RIGHT, fill=Y)
         text_area_json.config(yscrollcommand=text_area_scroll.set)
 
         def button_build_API():
-            functions.update_api(functions.build_API(api_object, api_filter, usr_token_key, usr_tokens, api_base_key, api_base), frame2)
+            global api_url
+            api_url = functions.build_API(api_object, api_filter, usr_token_key, usr_tokens, api_base_key, api_base)
+            functions.update_api(api_url, frame2)
 
         button_build_API = Button(frame3, text="Build API", command=button_build_API)
         button_build_API.place(x=50, y=10, width=150, height=30)
@@ -182,21 +194,30 @@ def draw_interface_config(root, frame1, frame2, frame3, usr_tokens, usr_token_ke
         def button_get_json_config():
             api_selected_object = str(api_object.get())
             type_oper="config"
-            #print("API METHOD: {}".format(int(api_method_rb.get())))
-            api_url = functions.build_API(api_object, api_filter, usr_token_key, usr_tokens, api_base_key, api_base)
-            list_json = functions.get_json(type_oper, api_methods[int(api_method_rb.get())], api_url, available_objects_config, api_selected_object)
-            # Antes de jogar na tela o JSON ele testa o tamanho, se for muito grande pergunta se quer salvar em arquivo direto
-            if int(list_json[0]) > 50:
-                if mb.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
-                    functions.save_file(list_json[1], "json")
+            try:
+                list_json = functions.get_json(type_oper, api_methods[int(api_method_rb.get())], api_url, available_objects_config, api_selected_object)
+            except ConnectionError:
+                messagebox.showerror("Conexão", "API Inválida!")
+            except MissingSchema:
+                messagebox.showerror("Conexão", "Monte a API primeiro!")
+            except Exception as e:
+                print(e)
+                messagebox.showerror("Conexão", "Erro desconhecido!")
             else:
-                text_area_json.delete(1.0, END)
-                text_area_json.insert(END, list_json[1])
+                # Antes de jogar na tela o JSON ele testa o tamanho, se for muito grande pergunta se quer salvar em arquivo direto
+                if int(list_json[0]) > 50:
+                    if messagebox.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
+                        functions.save_file(list_json[1], "json")
+                else:
+                    text_area_json.delete(1.0, END)
+                    text_area_json.insert(END, list_json[1])
 
         button_get_jason_config = Button(frame3, text="Get JSON Config", command=button_get_json_config)
         button_get_jason_config.place(x=210, y=10, width=150, height=30)
 
         def button_clear_text():
+            global api_url
+            api_url = ""
             text_area_json.delete(1.0, END)
             # text_area_json.insert(END, resposta)
 
@@ -297,7 +318,7 @@ def draw_interface_config(root, frame1, frame2, frame3, usr_tokens, usr_token_ke
             response_json = functions.post_json(type_oper, api_methods[int(api_method_rb.get())], api_url_list, available_objects_config, api_selected_object)
             # Antes de jogar na tela o JSON ele testa o tamanho, se for muito grande pergunta se quer salvar em arquivo direto
             if len(response_json) > 50:
-                if mb.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
+                if messagebox.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
                     functions.save_file(response_json, "json")
             else:
                 text_area_json.delete(1.0, END)
@@ -388,7 +409,7 @@ def draw_interface_config(root, frame1, frame2, frame3, usr_tokens, usr_token_ke
             response_json = functions.put_json(type_oper, api_methods[int(api_method_rb.get())], api_url_list, available_objects_config, api_selected_object)
             # Antes de jogar na tela o JSON ele testa o tamanho, se for muito grande pergunta se quer salvar em arquivo direto
             if len(response_json) > 50:
-                if mb.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
+                if messagebox.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
                     functions.save_file(response_json, "json")
             else:
                 text_area_json.delete(1.0, END)
@@ -479,7 +500,7 @@ def draw_interface_config(root, frame1, frame2, frame3, usr_tokens, usr_token_ke
             response_json = functions.delete_json(type_oper, api_methods[int(api_method_rb.get())], api_url_list, available_objects_config, api_selected_object)
             # Antes de jogar na tela o JSON ele testa o tamanho, se for muito grande pergunta se quer salvar em arquivo direto
             if len(response_json) > 50:
-                if mb.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
+                if messagebox.askyesno("Resposta muito grande", "Gostaria de salvar em arquivo?"):
                     functions.save_file(response_json, "json")
             else:
                 text_area_json.delete(1.0, END)

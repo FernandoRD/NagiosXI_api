@@ -1,7 +1,7 @@
 import requests
 from tkinter import Tk, filedialog, Message, Entry, StringVar, Text, Scrollbar, LEFT, RIGHT, Y, END, W, SUNKEN, OUTSIDE
 from tkinter import Button, Frame, IntVar, Radiobutton, Widget, OptionMenu
-from tkinter import messagebox as mb
+from tkinter import messagebox
 import json
 import re
 
@@ -52,32 +52,30 @@ def update_api_config(api_url_list, frame):
     show_api.place(x=130, y=0, width=820, height=60)
 
 # Salva arquivos no formato desejado
-def save_file(data_in, formato):
-    save_file_dialog = filedialog.asksaveasfilename(defaultextension="." + str(formato))
-    if save_file_dialog != "":
-        try:
-            with open(save_file_dialog, "w+") as file_dialog:
-                file_dialog.write(data_in)
-                file_dialog.close()
-                mb.showinfo("Arquivo", "Arquivo salvo com sucesso!")
-        except FileNotFoundError:
-            mb.showerror("Arquivo", "Arquivo de destino não pode ser salvo!")
-    else:
-        mb.showerror("Arquivo", "Arquivo de destino não selecionado!")
-
+def save_file(data_in, file_extension):
+    save_file_dialog = filedialog.asksaveasfilename(defaultextension="." + str(file_extension))
+    try:
+        with open(save_file_dialog, "w+") as file_dialog:
+            file_dialog.write(data_in)
+            file_dialog.close()
+            messagebox.showinfo("Arquivo", "Arquivo salvo com sucesso!")
+    except FileNotFoundError:
+        messagebox.showerror("Arquivo", "Arquivo de destino não pode ser salvo!")
+    except Exception as msg:
+        messagebox.showerror("Erro", "Erro desconhecido!\n" + str(msg))
+   
 # Carrega arquivos
 def load_file():
     load_file_dialog = filedialog.askopenfilename()
-    if load_file_dialog != "":
-        try:
-            with open(load_file_dialog, "r+") as file_dialog:
-                data_out = file_dialog.read()
-                file_dialog.close()
-                return str(data_out)
-        except Exception as msg:
-            mb.showerror("Arquivo", "Arquivo Inválido!\n" + str(msg))
-    else:
-        mb.showerror("Importar", "Arquivo não selecionado!")
+    try:
+        with open(load_file_dialog, "r+") as file_dialog:
+            data_out = file_dialog.read()
+            file_dialog.close()
+            return str(data_out)
+    except Exception as msg:
+        messagebox.showerror("Arquivo", "Arquivo de origem não selecionado!")
+    except Exception as e:
+        messagebox.showerror("Erro", "Erro desconhecido!\n" + str(msg))
 
 # Carrega os tokens dos servidores Nagios
 def load_tokens():
@@ -91,7 +89,7 @@ def load_tokens():
             data_out[str(i.split(":")[0])] = str(i.split(":")[1]).replace("\n","")
         return data_out
     except Exception as msg:
-        mb.showerror("Tokens", "Não foi possível carregar!\n" + str(msg))
+        messagebox.showerror("Tokens", "Não foi possível carregar!\n" + str(msg))
 
 # Carrega as bases das APIs dos servidores nagios
 def load_servers():
@@ -105,26 +103,15 @@ def load_servers():
             data_out[str(i.split(":")[0])] = "https://"+str(i.split(":")[1]).replace("\n","")+"/nagiosxi/api/v1"
         return data_out
     except Exception as msg:
-        mb.showerror("Servers", "Não foi possível carregar!\n" + str(msg))
+        messagebox.showerror("Servers", "Não foi possível carregar!\n" + str(msg))
 
 # Faz o request no Nagios
 def get_json(type_oper, api_method, api_url, available_objects, api_selected_object):
     data_out_lst = []
     try:
         nagios_json = requests.request(api_method, api_url, verify=False)
-    except ConnectionError:
-        mb.showerror("Conexão", "API Inválida!")
-        records = None
-        data_out = None
-    except MissingSchema:
-        mb.showerror("Conexão", "Monte a API primeiro!")
-        records = None
-        data_out = None
     except Exception as e:
-        print(e)
-        mb.showerror("Conexão", "Erro desconhecido!")
-        records = None
-        data_out = None
+        raise e
     else:
         # Testa se o servidor envia uma resposta válida
         if api_method == "get" and nagios_json.status_code == 200:
@@ -144,11 +131,11 @@ def get_json(type_oper, api_method, api_url, available_objects, api_selected_obj
                     records = None
                     data_out = None              
             else:
-                mb.showerror("API", "API Inválida!!")
+                messagebox.showerror("API", "API Inválida!!")
                 records = None
                 data_out = None
         else:
-            mb.showerror("Conexão", "Erro de conexão!!")
+            messagebox.showerror("Conexão", "Erro de conexão!!")
             records = None
             data_out = None
     data_out_lst.append(records)
@@ -160,12 +147,12 @@ def post_json(type_oper, api_method, api_url_list, available_objects, api_select
     try:
         nagios_json = requests.post(api_url_list[0], data=api_url_list[1], verify=False)
     except ConnectionError:
-        mb.showerror("Conexão", "API Inválida!")
+        messagebox.showerror("Conexão", "API Inválida!")
     except MissingSchema:
-        mb.showerror("Conexão", "Monte a API primeiro!")
+        messagebox.showerror("Conexão", "Monte a API primeiro!")
     except Exception as e:
         print(e)
-        mb.showerror("Conexão", "Erro desconhecido!")
+        messagebox.showerror("Conexão", "Erro desconhecido!")
     else:
         # Testa se o servidor envia uma resposta válida
         if api_method == "post" and nagios_json.status_code == 200:
@@ -173,9 +160,9 @@ def post_json(type_oper, api_method, api_url_list, available_objects, api_select
                 if type_oper == "config" and nagios_json.status_code == 200:
                     return nagios_json.json()
             else:
-                mb.showerror("API", "API Inválida!!")
+                messagebox.showerror("API", "API Inválida!!")
         else:
-            mb.showerror("Conexão", "Erro de conexão!!")
+            messagebox.showerror("Conexão", "Erro de conexão!!")
     #return nagios_json.json()
 
 # Faz p put (alteração) no Nagios
@@ -187,12 +174,12 @@ def put_json(type_oper, api_method, api_url_list, available_objects, api_selecte
     try:
         nagios_json = requests.put(temp, params=api_url_list[1], verify=False)
     except ConnectionError:
-        mb.showerror("Conexão", "API Inválida!")
+        messagebox.showerror("Conexão", "API Inválida!")
     except MissingSchema:
-        mb.showerror("Conexão", "Monte a API primeiro!")
+        messagebox.showerror("Conexão", "Monte a API primeiro!")
     except Exception as e:
         print(e)
-        mb.showerror("Conexão", "Erro desconhecido!")
+        messagebox.showerror("Conexão", "Erro desconhecido!")
     else:
         # Testa se o servidor envia uma resposta válida
         if api_method == "put" and nagios_json.status_code == 200:
@@ -200,9 +187,9 @@ def put_json(type_oper, api_method, api_url_list, available_objects, api_selecte
                 if type_oper == "config" and nagios_json.status_code == 200:
                     return nagios_json.json()
             else:
-                mb.showerror("API", "API Inválida!!")
+                messagebox.showerror("API", "API Inválida!!")
         else:
-            mb.showerror("Conexão", "Erro de conexão!!")
+            messagebox.showerror("Conexão", "Erro de conexão!!")
     #return nagios_json.json()
 
 # Remove do Nagios
@@ -213,12 +200,12 @@ def delete_json(type_oper, api_method, api_url_list, available_objects, api_sele
     try:
         nagios_json = requests.delete(temp, verify=False)       
     except ConnectionError:
-        mb.showerror("Conexão", "API Inválida!")
+        messagebox.showerror("Conexão", "API Inválida!")
     except MissingSchema:
-        mb.showerror("Conexão", "Monte a API primeiro!")
+        messagebox.showerror("Conexão", "Monte a API primeiro!")
     except Exception as e:
         print(e)
-        mb.showerror("Conexão", "Erro desconhecido!")
+        messagebox.showerror("Conexão", "Erro desconhecido!")
     else:
         # Testa se o servidor envia uma resposta válida
         if api_method == "delete" and nagios_json.status_code == 200:
@@ -226,9 +213,9 @@ def delete_json(type_oper, api_method, api_url_list, available_objects, api_sele
                 if type_oper == "config" and nagios_json.status_code == 200:
                     return nagios_json.json()
             else:
-                mb.showerror("API", "API Inválida!!")
+                messagebox.showerror("API", "API Inválida!!")
         else:
-            mb.showerror("Conexão", "Erro de conexão!!")
+            messagebox.showerror("Conexão", "Erro de conexão!!")
     #return nagios_json.json()
 
 # Remove caracteres indesejados do JSON para salvamento
@@ -310,5 +297,5 @@ def convert_json():
 
 # Sai do programa
 def quit_program(root):
-    if mb.askyesno("Verificando", "Gostaria mesmo de encerrar?"):
+    if messagebox.askyesno("Verificando", "Gostaria mesmo de encerrar?"):
         root.quit()

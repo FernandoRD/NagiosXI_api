@@ -1,7 +1,7 @@
 import requests
-from tkinter import Canvas, Tk, filedialog, Message, Entry, StringVar, Text, Scrollbar, LEFT, RIGHT, Y, END, W, FLAT, SUNKEN, RAISED, GROOVE, RIDGE, OUTSIDE, INSIDE
+from tkinter import Tk, filedialog, Message, Entry, StringVar, Text, Scrollbar, LEFT, RIGHT, Y, END, W, FLAT, SUNKEN, RAISED, GROOVE, RIDGE, OUTSIDE, INSIDE
 from tkinter import Button, Frame, IntVar, Radiobutton, Widget, OptionMenu
-from tkinter import messagebox as mb
+from tkinter import messagebox
 import json
 import re
 import functions
