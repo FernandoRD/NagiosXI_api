@@ -33,7 +33,7 @@ test3:yuhnbrtdteI6eaNoprq08sUEFPTZb3JAxH05rWcdrkXbvgjh7lh6jnZfTJJTl8m
 
 ## Developing
 
-Feel free to download, use e modify it:
+Feel free to download, use and modify it:
 
 ```shell
 git clone https://github.com/FernandoRD/NagiosXI_api.git
