@@ -56,7 +56,7 @@ def save_file(data_in, file_extension):
     save_file_dialog = filedialog.asksaveasfilename(defaultextension="." + str(file_extension))
     try:
         with open(save_file_dialog, "w+") as file_dialog:
-            file_dialog.write(data_in)
+            file_dialog.write(str(data_in))
             file_dialog.close()
             messagebox.showinfo("Arquivo", "Arquivo salvo com sucesso!")
     except FileNotFoundError:
@@ -72,10 +72,10 @@ def load_file():
             data_out = file_dialog.read()
             file_dialog.close()
             return str(data_out)
-    except Exception as msg:
-        messagebox.showerror("Arquivo", "Arquivo de origem não selecionado!")
+    #except Exception as msg:
+    #    messagebox.showerror("Arquivo", "Arquivo de origem não selecionado!")
     except Exception as e:
-        messagebox.showerror("Erro", "Erro desconhecido!\n" + str(msg))
+        messagebox.showerror("Erro", "Erro desconhecido!\n {}".format(e))
 
 # Carrega os tokens dos servidores Nagios
 def load_tokens():
@@ -111,7 +111,7 @@ def get_json(type_oper, api_method, api_url, available_objects, api_selected_obj
     try:
         nagios_json = requests.request(api_method, api_url, verify=False)
     except Exception as e:
-        raise e
+        messagebox.showerror("API", "Erro:{}".format(e))
     else:
         # Testa se o servidor envia uma resposta válida
         if api_method == "get" and nagios_json.status_code == 200:
@@ -138,8 +138,8 @@ def get_json(type_oper, api_method, api_url, available_objects, api_selected_obj
             messagebox.showerror("Conexão", "Erro de conexão!!")
             records = None
             data_out = None
-    data_out_lst.append(records)
-    data_out_lst.append(data_out)
+        data_out_lst.append(records)
+        data_out_lst.append(data_out)
     return data_out_lst
     
 # Faz o post (criação) no Nagios
@@ -221,8 +221,9 @@ def delete_json(type_oper, api_method, api_url_list, available_objects, api_sele
 # Remove caracteres indesejados do JSON para salvamento
 def format_json(data_in):
     data_out_temp = data_in
-    records = re.search("(?<=(recordcount\'\:\s))\d+",data_out_temp)
-
+    print(len(data_out_temp))
+    records = re.search(r"(?<=recordcount\'\:\s\')\d+", data_out_temp)
+    print(records)
     data_out_temp = re.sub("(?<!:\s)\"(?!\,)", "", data_out_temp)
     data_out_temp = re.sub("recordcount\':\s\.*?\s\'", "recordcount\': "+records.group()+"\,"+" \"", data_out_temp)
     data_out_temp = re.sub("(?<=long_output\'\:)(.*?)(?=\, \')", " \'removed due to import json problem\'", data_out_temp)
@@ -260,40 +261,45 @@ def convert_json():
     temp_file=str(load_file())
     
     try:
-        json_temp = json.loads(format_json(temp_file))
+        json_temp_formated = format_json(temp_file)
     except Exception as e:
-        print(e)
-        return "ERRO"
-    
-    object_type = list(json_temp.keys())[1]
-    # Chama a função recusiva que lê o objeto passado
-    # Devido ao "append" na função recursiva a resposta está vindo como [[]]
-    processed_list = list_test(json_temp[object_type])[0]
-    # Pega o primeiro elemento da lista (dict) retorna as keys e converte para uma lista que será a primeira linha do CSV
-    keys_obj = list(processed_list[0].keys())
-    # Limpeza dos caracteres para a primeira liha do CSV
-    caracter = ["{", "}", "[", "]"]
-    # Conversão de delimitador ", '" para "#'" que será usado no excel como delimitador
-    # Foi feito assim pois alguns valores do json possuem virgula e isto estava desformatando na hora de importar no excel
-    data_out_temp = str(keys_obj).replace(", '", "#'")
-    data_out_keys = None
-    for j in caracter:
-        data_out_keys = data_out_temp.replace(j, "")
-        data_out_temp = data_out_keys
-    # Escrevendo 1a linha da data_out que será gravada em arquivo
-    data_out += data_out_keys
-    data_out += "\n"
-    # Processamento analogo ao da 1a linha do CSV para o corpo do CSV
-    for i in range(0, len(processed_list)):
-        data_out_temp = str(processed_list[i])
-        caracter = ["{", "}", "[", "]"]
-        for j in caracter:
-            data_out_body = data_out_temp.replace(j, "")
-            data_out_temp = data_out_body
-        # Faço da # o delimitador pois os dados do JSON do Nagios possuem valores que contem vírgulas
-        data_out += data_out_temp.replace(", '", "#'", len(keys_obj) - 1)
-        data_out += "\n"
-    save_file(data_out, "csv")
+        print("convert_json/format_json: {}".format(e))
+    else:
+        try:
+            json_temp = json.loads(json_temp_formated)
+        except Exception as e:
+            print("convert_json: {}".format(e))
+            return "ERRO"
+        else:
+            object_type = list(json_temp.keys())[1]
+            # Chama a função recusiva que lê o objeto passado
+            # Devido ao "append" na função recursiva a resposta está vindo como [[]]
+            processed_list = list_test(json_temp[object_type])[0]
+            # Pega o primeiro elemento da lista (dict) retorna as keys e converte para uma lista que será a primeira linha do CSV
+            keys_obj = list(processed_list[0].keys())
+            # Limpeza dos caracteres para a primeira liha do CSV
+            caracter = ["{", "}", "[", "]"]
+            # Conversão de delimitador ", '" para "#'" que será usado no excel como delimitador
+            # Foi feito assim pois alguns valores do json possuem virgula e isto estava desformatando na hora de importar no excel
+            data_out_temp = str(keys_obj).replace(", '", "#'")
+            data_out_keys = None
+            for j in caracter:
+                data_out_keys = data_out_temp.replace(j, "")
+                data_out_temp = data_out_keys
+            # Escrevendo 1a linha da data_out que será gravada em arquivo
+            data_out += data_out_keys
+            data_out += "\n"
+            # Processamento analogo ao da 1a linha do CSV para o corpo do CSV
+            for i in range(0, len(processed_list)):
+                data_out_temp = str(processed_list[i])
+                caracter = ["{", "}", "[", "]"]
+                for j in caracter:
+                    data_out_body = data_out_temp.replace(j, "")
+                    data_out_temp = data_out_body
+                # Faço da # o delimitador pois os dados do JSON do Nagios possuem valores que contem vírgulas
+                data_out += data_out_temp.replace(", '", "#'", len(keys_obj) - 1)
+                data_out += "\n"
+            save_file(data_out, "csv")
 
 # Sai do programa
 def quit_program(root):
