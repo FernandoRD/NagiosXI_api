@@ -1,4 +1,5 @@
 # NagiosXI API
+
 > Access Nagios XI throught its API
 
 This project is a python 3 script, with a graphcal user interface that allows to conect to Nagios XI and use it´s API for reading and configuration.
@@ -33,12 +34,11 @@ test3:yuhnbrtdteI6eaNoprq08sUEFPTZb3JAxH05rWcdrkXbvgjh7lh6jnZfTJJTl8m
 
 ## Developing
 
-Feel free to download, use and modify it:
+Feel free to download, use e modify it:
 
 ```shell
 git clone https://github.com/FernandoRD/NagiosXI_api.git
 ```
-
 
 ## Features
 
@@ -47,7 +47,6 @@ git clone https://github.com/FernandoRD/NagiosXI_api.git
 ![Screenshot 2](https://github.com/FernandoRD/NagiosXI_api/blob/main/Screen2.png)
 
 ![Screenshot 3](https://github.com/FernandoRD/NagiosXI_api/blob/main/Screen3.png)
-
 
 ## Licensing
 

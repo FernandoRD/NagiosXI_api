@@ -141,6 +141,29 @@ def get_json(type_oper, api_method, api_url, available_objects, api_selected_obj
         data_out_lst.append(records)
         data_out_lst.append(data_out)
     return data_out_lst
+
+def get_json_system(type_oper, api_method, api_url, available_objects, api_selected_object):
+    data_out_lst = []
+    try:
+        nagios_json = requests.request(api_method, api_url, verify=False)
+    except Exception as e:
+        messagebox.showerror("API", "Erro:{}".format(e))
+    else:
+        # Testa se o servidor envia uma resposta válida
+        if api_method == "get" and nagios_json.status_code == 200:
+            if str(nagios_json.content).find("Invalid API Key") == -1:
+                if type_oper == "system":
+                    data_out = nagios_json.json()
+                else:
+                    data_out = None              
+            else:
+                messagebox.showerror("API", "API Inválida!!")
+                data_out = None
+        else:
+            messagebox.showerror("Conexão", "Erro de conexão!!")
+            data_out = None
+        data_out_lst.append(data_out)
+    return data_out_lst
     
 # Faz o post (criação) no Nagios
 def post_json(type_oper, api_method, api_url_list, available_objects, api_selected_object):
@@ -222,20 +245,46 @@ def delete_json(type_oper, api_method, api_url_list, available_objects, api_sele
 def format_json(data_in):
     data_out_temp = data_in
     print(len(data_out_temp))
-    records = re.search(r"(?<=recordcount\'\:\s\')\d+", data_out_temp)
+    # Extrair o número de objetos do primeiro campo do JSON (Versão 5.6.X vem com '' e versão 5.7.X vem apenas o número)
+    records = re.search(r"(?<=recordcount[\'\"]\:\s)[\'\"]*\d+", data_out_temp)
+    records = records.group()
+    records = re.sub("\'", "", records)
     print(records)
+    
+    # Remove o " que não possua um : seguido de um espaço antes e não possua uma , depois
     data_out_temp = re.sub("(?<!:\s)\"(?!\,)", "", data_out_temp)
-    data_out_temp = re.sub("recordcount\':\s\.*?\s\'", "recordcount\': "+records.group()+"\,"+" \"", data_out_temp)
+    
+    # Reescreve o numero de objetos
+    data_out_temp = re.sub("recordcount\':\s\.*?\s\'", "recordcount\': "+records+"\,"+" \"", data_out_temp)
+    
+    # Remove todo campo long_output se houver devido a grande dificuldade de ler corretamente
     data_out_temp = re.sub("(?<=long_output\'\:)(.*?)(?=\, \')", " \'removed due to import json problem\'", data_out_temp)
+    
+    # Substitui {' por {"
     data_out_temp = re.sub("\{\'", "{\"", data_out_temp)
+    
+    # Substitui '} por "}
     data_out_temp = re.sub("\'\}", "\"}", data_out_temp)
+    
+    # Substitui ', ' por ", "
     data_out_temp = re.sub("\', \'", "\", \"", data_out_temp)
+    
+    # Substitui ': ' por ": "
     data_out_temp = re.sub("\': \'", "\": \"", data_out_temp)
+    
+    # Substitui ':(espaço) ":(espaço)
     data_out_temp = re.sub("\':\s", "\": ", data_out_temp)
+    
+    # Substitui , ' por , "
     data_out_temp = re.sub("\,\s\'", ", \"", data_out_temp)
+    
+    # Remove os ' restantes
     data_out_temp = re.sub("\'", "", data_out_temp)
-
+    
+    # Substitui qualquer ' por " que tenha sobrado
     data_out = str(data_out_temp).replace("'", '"')
+    
+    # Remove os caracteres selecionados em "caracter"
     caracter = ["\\"]
     for i in caracter:
         data_out_temp = str(data_out)
@@ -258,7 +307,7 @@ def convert_json():
         return data_out_rec
 
     data_out = ""
-    temp_file=str(load_file())
+    temp_file = load_file()
     
     try:
         json_temp_formated = format_json(temp_file)
@@ -299,6 +348,7 @@ def convert_json():
                 # Faço da # o delimitador pois os dados do JSON do Nagios possuem valores que contem vírgulas
                 data_out += data_out_temp.replace(", '", "#'", len(keys_obj) - 1)
                 data_out += "\n"
+            data_out = str(data_out).replace("#'",",'")
             save_file(data_out, "csv")
 
 # Sai do programa

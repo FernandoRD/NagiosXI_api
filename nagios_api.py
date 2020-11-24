@@ -7,20 +7,19 @@ import re
 import functions
 import vis
 
-
 def main():
 
     root = Tk()
     root.title("Nagios API")
 
     ################################### FRAME 0 ###################################
-    frame0 = Frame(root, width=1000, height=70)
+    frame0 = Frame(root, width=1000, height=100)
     
     for widget in frame0.winfo_children():
         widget.destroy()
 
     api_base = functions.load_servers()
-    api_base_key = StringVar(root)
+    api_base_key = StringVar()
     # Definido api_object default copiando a key de api_command
     api_base_key.set(str(list(api_base.keys())[-1]))
 
@@ -30,7 +29,7 @@ def main():
     api_base_menu.place(x=130, y=0)
 
     usr_tokens = functions.load_tokens()
-    usr_token_key = StringVar(root)
+    usr_token_key = StringVar()
     usr_token_key.set(str(list(usr_tokens.keys())[-1]))
 
     tit_user_token = Message(frame0, text="Token", aspect=400)
@@ -40,15 +39,20 @@ def main():
 
     operation = IntVar()
     operation.set(0)  # Inicializando com a opção read only
-    operations = ["Applied", "Config"]
+    operations = ["Applied", "Config", "System"]
 
     def draw_interface_applied():
-        vis.draw_interface_applied(root, frame1, frame2, frame3, usr_tokens, usr_token_key, api_base, api_base_key)
+        vis.draw_interface_applied(root, frame0, frame1, frame2, frame3, usr_tokens, usr_token_key, api_base, api_base_key)
     def draw_interface_config():
-        vis.draw_interface_config(root, frame1, frame2, frame3, usr_tokens, usr_token_key, api_base, api_base_key)
+        vis.draw_interface_config(root, frame0, frame1, frame2, frame3, usr_tokens, usr_token_key, api_base, api_base_key)
+    def draw_interface_system():
+        vis.draw_interface_system(root, frame0, frame1, frame2, frame3, usr_tokens, usr_token_key, api_base, api_base_key)
 
+
+    
     Radiobutton(frame0, text=operations[0], variable=operation, command=draw_interface_applied, value=0).place(x=0, y=30)
     Radiobutton(frame0, text=operations[1], variable=operation, command=draw_interface_config, value=1).place(x=0, y=50)
+    Radiobutton(frame0, text=operations[2], variable=operation, command=draw_interface_system, value=2).place(x=0, y=70)
 
     frame0.pack()
     ################################### FRAME 1 ###################################
